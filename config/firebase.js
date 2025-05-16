@@ -22,3 +22,4 @@ const db = getFirestore(app); // 🔥 Firestore başlatılıyor
 const auth = getAuth(app);
 
 export { auth , db};
+//test
