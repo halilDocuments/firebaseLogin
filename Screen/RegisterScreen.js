@@ -21,7 +21,7 @@ export default function RegisterScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
   
-      console.log("✅ Kullanıcı başarıyla oluşturuldu:", user);
+      console.log(" Kullanıcı başarıyla oluşturuldu:", user);
   
       const userData = {
         name,
@@ -32,13 +32,13 @@ export default function RegisterScreen({ navigation }) {
   
       await setDoc(doc(db, 'users', user.uid), userData);
   
-      console.log("📦 Firestore'a kaydedilen veriler:", userData);
-      Alert.alert('✅ Kayıt başarılı ve bilgiler kaydedildi!');
+      console.log(" Firestore'a kaydedilen veriler:", userData);
+      Alert.alert(' Kayıt başarılı ve bilgiler kaydedildi!');
 
-      navigation.navigate('Login'); // Kayıt başarılıysa giriş ekranına yönlendir
+      navigation.navigate('Login'); 
     } catch (error) {
-      console.log("❌ Hata:", error.code, error.message); // Konsola yazdır
-      setMessage(`❌ ${error.message}`);
+      console.log(" Hata:", error.code, error.message); // Konsola yazdır
+      setMessage(` ${error.message}`);
     }
   };
 

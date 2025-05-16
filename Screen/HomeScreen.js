@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { auth, db } from '../config/firebase';
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
-import { Ionicons } from '@expo/vector-icons'; // İkonlar için
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
@@ -10,10 +10,29 @@ export default function HomeScreen() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [userName, setUserName] = useState('');
   const userId = auth.currentUser?.uid;
-  const userName = auth.currentUser?.displayName || 'Kullanıcı'; // Kullanıcı adı, varsa alınır
 
-  // 🔄 Firestore'dan notları çek
+  // Firestore'dan kullanıcı adını çek
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        if (!userId) return;
+        const userDocRef = doc(db, 'users', userId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setUserName(userData.name || 'Kullanıcı');
+        }
+      } catch (error) {
+        console.log('Kullanıcı adı alınırken hata:', error.message);
+      }
+    };
+
+    fetchUserName();
+  }, [userId]);
+
+  // Notları dinle
   useEffect(() => {
     if (!userId) return;
 
@@ -29,7 +48,6 @@ export default function HomeScreen() {
     return unsubscribe;
   }, [userId]);
 
-  // ➕ Notu Firestore'a kaydet
   const handleAddNote = async () => {
     if (note.trim() === '') return;
 
@@ -41,17 +59,15 @@ export default function HomeScreen() {
         createdAt: new Date().toISOString()
       });
       setNote('');
-      setMessage('✅ Not başarıyla kaydedildi!');
-      console.log('✅ Not başarıyla kaydedildi!');
+      setMessage('Not başarıyla kaydedildi!');
     } catch (error) {
-      console.log("❌ Hata:", error.message);
-      setMessage('❌ Not kaydedilirken bir hata oluştu.');
+      console.log("Hata:", error.message);
+      setMessage('Not kaydedilirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 🗑️ Notu silme
   const handleDeleteNote = async (id) => {
     try {
       await deleteDoc(doc(db, 'notes', id));
@@ -62,20 +78,20 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient
-      colors={['#1e1e2f', '#3e2f5b']} // Morumsu koyu bir zemin
+      colors={['#1e1e2f', '#3e2f5b']}
       style={styles.container}
       start={{ x: 0.2, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
       <View style={styles.innerContainer}>
-        {/* Selam mesajı */}
-        <Text style={styles.title}>Hoş Geldin, {userName}!</Text>
+        <Text style={styles.title}>Hoş Geldin, {userName || 'kullanıcı'}!</Text>
         <Text style={styles.subtitle}>Notlarını buraya kaydedebilirsin.</Text>
 
         <TextInput
           value={note}
           onChangeText={setNote}
           placeholder="Notunuzu yazın..."
+          placeholderTextColor="#ccc"
           style={styles.input}
           multiline
         />
@@ -89,7 +105,6 @@ export default function HomeScreen() {
 
         {message && <Text style={styles.message}>{message}</Text>}
 
-        {/* Eğer notlar varsa, listeyi göster */}
         {notes.length > 0 ? (
           <FlatList
             data={notes}
